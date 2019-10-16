@@ -1,6 +1,7 @@
 package gov
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -27,9 +28,23 @@ func (v *Gov) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	v.handleHTTPRequest(c)
 }
 
-func (v *Gov) Run(s string) error {
-	err := http.ListenAndServe(s, v)
+func (v *Gov) Run(addr ...string) error {
+	address := resolveAddr(addr)
+	fmt.Println("[gov] listening on " + address)
+
+	err := http.ListenAndServe(address, v)
 	return err
+}
+
+func resolveAddr(addr []string) string {
+	switch len(addr) {
+	case 0:
+		return ":9000"
+	case 1:
+		return addr[0]
+	default:
+		panic("too many parameters")
+	}
 }
 
 func (v *Gov) handleHTTPRequest(c *Context) {
