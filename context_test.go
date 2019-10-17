@@ -110,15 +110,18 @@ func TestContextPostForm(t *testing.T) {
 func TestContestPostJSON(t *testing.T) {
 	c, _ := CrateTestCtx(nil)
 
-	body := bytes.NewBufferString("{\"id\": 1024, \"name\": \"vritser\"}")
+	body := bytes.NewBufferString("{\"id\": \"1024\", \"name\": \"vritser\"}")
 	c.Request, _ = http.NewRequest("POST", "/", body)
 	c.Request.Header.Add("Content-Type", "application/json")
 
-	fmt.Println(c.formCache)
-	name, ok := c.GetForm("name")
-	assert.True(t, ok)
-	assert.Equal(t, "vritser", name)
+	var obj struct {
+		Id   string `json:"id"`
+		Name string `json:"name"`
+	}
 
-	id := c.Form("id")
-	assert.Equal(t, "1024", id)
+	fmt.Println(c.formCache)
+	err := c.Bind(&obj)
+	assert.Nil(t, err)
+	assert.Equal(t, "vritser", obj.Name)
+	assert.Equal(t, "1024", obj.Id)
 }
