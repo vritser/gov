@@ -25,6 +25,17 @@ type Context struct {
 	Storage    map[string]interface{}
 }
 
+func (c *Context) reset() {
+	c.params = c.params[0:0]
+	c.Storage = nil
+	c.formCache = nil
+	c.queryCache = nil
+}
+
+func (c *Context) resetWriter(w http.ResponseWriter) {
+	c.Response = w
+}
+
 func (c *Context) Path() string {
 	return c.Request.URL.Path
 }
@@ -201,11 +212,6 @@ func (c *Context) GetQueryArray(key string) ([]string, bool) {
 	return []string{}, false
 }
 
-func (c *Context) FormAry(key string) []string {
-	values, _ := c.GetFormArray(key)
-	return values
-}
-
 func (c *Context) Form(key string) string {
 	value, _ := c.GetForm(key)
 	return value
@@ -219,7 +225,13 @@ func (c *Context) GetForm(key string) (string, bool) {
 }
 
 func (c *Context) GetFormMap(key string) (map[string]string, bool) {
-	return map[string]string{}, false
+	c.getFormCache()
+	return c.get(c.formCache, key)
+}
+
+func (c *Context) FormAry(key string) []string {
+	values, _ := c.GetFormArray(key)
+	return values
 }
 
 func (c *Context) GetFormArray(key string) ([]string, bool) {
@@ -253,6 +265,7 @@ func (c *Context) getQueryCache() {
 
 func (c *Context) getFormCache() {
 	if c.formCache == nil {
+		c.Request.ParseForm()
 		c.formCache = c.Request.PostForm
 	}
 }

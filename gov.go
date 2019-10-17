@@ -19,6 +19,10 @@ func New() *Gov {
 	}
 }
 
+func (v *Gov) allocateContext() *Context {
+	return &Context{}
+}
+
 func (v *Gov) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c := &Context{
 		Request:  r,
