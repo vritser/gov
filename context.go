@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/vritser/gov/binding"
 )
 
 type Param struct {
@@ -42,6 +44,10 @@ func (c *Context) Path() string {
 
 func (c *Context) Method() string {
 	return c.Request.Method
+}
+
+func (c *Context) ContentType() string {
+	return c.Request.Header.Get("Content-Type")
 }
 
 func (c *Context) Json(resp_body interface{}) {
@@ -268,4 +274,21 @@ func (c *Context) getFormCache() {
 		c.Request.ParseForm()
 		c.formCache = c.Request.PostForm
 	}
+}
+
+func (c *Context) Bind(obj interface{}) error {
+	b := binding.Default(c.Method(), c.ContentType())
+	return b.Bind(c.Request, obj)
+}
+
+func (c *Context) BindJSON(obj interface{}) error {
+	return c.BindWith(obj, binding.JSON)
+}
+
+func (c *Context) BindXML(obj interface{}) error {
+	return c.BindWith(obj, binding.XML)
+}
+
+func (c *Context) BindWith(obj interface{}, parser binding.BodyParser) error {
+	return parser.Bind(c.Request, obj)
 }
