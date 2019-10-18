@@ -2,9 +2,9 @@ package gov
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 	"time"
 
@@ -107,21 +107,50 @@ func TestContextPostForm(t *testing.T) {
 	assert.Equal(t, "20", age)
 }
 
-func TestContestPostJSON(t *testing.T) {
+func TestContextBindJSON(t *testing.T) {
 	c, _ := CrateTestCtx(nil)
 
-	body := bytes.NewBufferString("{\"id\": \"1024\", \"name\": \"vritser\"}")
+	body := bytes.NewBufferString("{\"id\": \"1024\", \"name\": \"vritser\", \"foo\": {\"bar\":\"bar\"}}")
 	c.Request, _ = http.NewRequest("POST", "/", body)
 	c.Request.Header.Add("Content-Type", "application/json")
 
 	var obj struct {
 		Id   string `json:"id"`
 		Name string `json:"name"`
+		Foo  Foo    `json:"foo"`
 	}
 
-	fmt.Println(c.formCache)
 	err := c.Bind(&obj)
 	assert.Nil(t, err)
 	assert.Equal(t, "vritser", obj.Name)
 	assert.Equal(t, "1024", obj.Id)
+	assert.Equal(t, "bar", obj.Foo.Bar)
+}
+
+func TestContextBindForm(t *testing.T) {
+	c, _ := CrateTestCtx(nil)
+	body := bytes.NewBufferString("name=vritser&id=20&age=10")
+	c.Request, _ = http.NewRequest("POST", "http://example.com/?t=123", body)
+	c.Request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	var obj struct {
+		Id   string `form:"id"`
+		Name string `form:"name"`
+		Age  int
+		sex  int
+		Foo  Foo
+		int  `form:"age"`
+		I32  int32 `form:"age"`
+	}
+
+	err := c.Bind(&obj)
+	assert.Nil(t, err)
+	assert.Equal(t, "20", obj.Id)
+	assert.Equal(t, "vritser", obj.Name)
+	assert.Equal(t, reflect.Int32, reflect.ValueOf(obj.I32).Kind())
+
+}
+
+type Foo struct {
+	Bar string
 }
