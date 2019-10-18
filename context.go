@@ -71,7 +71,7 @@ func (c *Context) Status(code int) {
 func writeContentType(w http.ResponseWriter, value []string) {
 	header := w.Header()
 
-	if value := header["Content-Type"]; len(value) == 0 {
+	if contentType := header["Content-Type"]; len(contentType) == 0 {
 		header["Content-Type"] = value
 	}
 }
