@@ -26,9 +26,10 @@ type BodyParser interface {
 }
 
 var (
-	JSON = jsonParser{}
-	XML  = xmlParser{}
-	Form = formParser{}
+	JSON          = jsonParser{}
+	XML           = xmlParser{}
+	Form          = formParser{}
+	MultipartForm = multipartFormParser{}
 )
 
 func Default(method, contentType string) BodyParser {
@@ -41,6 +42,8 @@ func Default(method, contentType string) BodyParser {
 		return JSON
 	case MIMEXML, MIMEXML2:
 		return XML
+	case MIMEMultipartPOSTForm:
+		return MultipartForm
 	default:
 		return Form
 	}
