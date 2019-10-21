@@ -2,6 +2,8 @@ package gov
 
 import (
 	"bytes"
+	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -129,7 +131,7 @@ func TestContextBindJSON(t *testing.T) {
 
 func TestContextBindForm(t *testing.T) {
 	c, _ := CrateTestCtx(nil)
-	body := bytes.NewBufferString("name=vritser&id=20&age=10")
+	body := bytes.NewBufferString("name=vritser&id=20&age=10&ary=520&ary=521&slc=747&slc=749")
 	c.Request, _ = http.NewRequest("POST", "http://example.com/?t=123", body)
 	c.Request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
@@ -138,17 +140,71 @@ func TestContextBindForm(t *testing.T) {
 		Name string `form:"name"`
 		Age  int
 		sex  int
-		Foo  Foo
+		I32  int32  `form:"age"`
+		Ary  [2]int `form:"ary"`
+		Slc  []int  `form:"slc"`
 		int  `form:"age"`
-		I32  int32 `form:"age"`
+	}
+
+	err := c.Bind(&obj)
+
+	assert.Nil(t, err)
+	assert.Equal(t, []int{747, 749}, obj.Slc)
+	assert.Equal(t, [2]int{520, 521}, obj.Ary)
+	assert.Equal(t, "20", obj.Id)
+	assert.Equal(t, "vritser", obj.Name)
+	assert.Equal(t, reflect.Int32, reflect.ValueOf(obj.I32).Kind())
+	assert.Zero(t, obj.int)
+	assert.Zero(t, obj.Age)
+	assert.Zero(t, obj.sex)
+}
+
+func TestContextBindMultipartForm(t *testing.T) {
+	c, _ := CrateTestCtx(nil)
+
+	buf := new(bytes.Buffer)
+	mw := multipart.NewWriter(buf)
+	assert.NoError(t, mw.WriteField("id", "10"))
+	assert.NoError(t, mw.WriteField("name", "vritser"))
+	mw.Close()
+
+	c.Request, _ = http.NewRequest("POST", "/", buf)
+	c.Request.Header.Set("Content-Type", mw.FormDataContentType())
+
+	var obj struct {
+		Id   int    `form:"id"`
+		Name string `form:"name"`
 	}
 
 	err := c.Bind(&obj)
 	assert.Nil(t, err)
-	assert.Equal(t, "20", obj.Id)
+	assert.Equal(t, 10, obj.Id)
 	assert.Equal(t, "vritser", obj.Name)
-	assert.Equal(t, reflect.Int32, reflect.ValueOf(obj.I32).Kind())
+}
 
+func TestContextWriteFile(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := CrateTestCtx(w)
+	c.Request, _ = http.NewRequest("GET", "/", nil)
+
+	c.WriteFile("./gov.go")
+
+	assert.Equal(t, 200, w.Code)
+	assert.Contains(t, w.Body.String(), "func New() *Gov {")
+	assert.Equal(t, "text/plain; charset=utf-8", w.Header().Get("Content-Type"))
+}
+
+func TestContextWriteAttachement(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := CrateTestCtx(w)
+
+	c.Request, _ = http.NewRequest("GET", "/", nil)
+	filename := "SpecifiedFilieName.go"
+	c.WriteFileWith("./gov.go", filename)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Contains(t, w.Body.String(), "func New() *Gov {")
+	assert.Equal(t, fmt.Sprintf("attachment; filename=\"%s\"", filename), w.Header().Get("Content-Disponsion"))
 }
 
 type Foo struct {

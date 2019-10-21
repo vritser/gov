@@ -3,6 +3,7 @@ package gov
 import (
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -47,7 +48,19 @@ func (c *Context) Method() string {
 }
 
 func (c *Context) ContentType() string {
-	return c.Request.Header.Get("Content-Type")
+	return cleanHeaderFlags(c.header("Content-Type"))
+}
+
+func (c *Context) SetHeader(k, v string) {
+	c.Response.Header().Set(k, v)
+}
+
+func (c *Context) Header(key string) string {
+	return c.header(key)
+}
+
+func (c *Context) header(key string) string {
+	return c.Request.Header.Get(key)
 }
 
 func (c *Context) Json(resp_body interface{}) {
@@ -276,6 +289,28 @@ func (c *Context) getFormCache() {
 	}
 }
 
+// Get file and write file
+func (c *Context) File(name string) (*multipart.FileHeader, error) {
+	if c.Request.MultipartForm == nil {
+		if err := c.Request.ParseMultipartForm(256); err != nil {
+			return nil, err
+		}
+	}
+
+	_, fh, err := c.Request.FormFile(name)
+	return fh, err
+}
+
+func (c *Context) WriteFile(filepath string) {
+	http.ServeFile(c.Response, c.Request, filepath)
+}
+
+func (c *Context) WriteFileWith(filepath, filename string) {
+	c.SetHeader("content-disponsion", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	c.WriteFile(filepath)
+}
+
+// bindings
 func (c *Context) Bind(obj interface{}) error {
 	b := binding.Default(c.Method(), c.ContentType())
 	return b.Bind(c.Request, obj)
