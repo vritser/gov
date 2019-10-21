@@ -306,7 +306,7 @@ func (c *Context) WriteFile(filepath string) {
 }
 
 func (c *Context) WriteFileWith(filepath, filename string) {
-	c.SetHeader("content-disponsion", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	c.SetHeader("Content-Disponsion", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	c.WriteFile(filepath)
 }
 
