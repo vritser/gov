@@ -200,7 +200,7 @@ func TestContextWriteAttachement(t *testing.T) {
 
 	c.Request, _ = http.NewRequest("GET", "/", nil)
 	filename := "SpecifiedFilieName.go"
-	c.WriteFileWith("./gov.go", filename)
+	c.WriteAttachement("./gov.go", filename)
 
 	assert.Equal(t, 200, w.Code)
 	assert.Contains(t, w.Body.String(), "func New() *Gov {")

@@ -305,7 +305,7 @@ func (c *Context) WriteFile(filepath string) {
 	http.ServeFile(c.Response, c.Request, filepath)
 }
 
-func (c *Context) WriteFileWith(filepath, filename string) {
+func (c *Context) WriteAttachement(filepath, filename string) {
 	c.SetHeader("Content-Disponsion", fmt.Sprintf("attachment; filename=\"%s\"", filename))
 	c.WriteFile(filepath)
 }
