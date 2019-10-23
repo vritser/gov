@@ -182,6 +182,23 @@ func TestContextBindMultipartForm(t *testing.T) {
 	assert.Equal(t, "vritser", obj.Name)
 }
 
+func TestContextBindQuery(t *testing.T) {
+	c, _ := CrateTestCtx(nil)
+
+	c.Request, _ = http.NewRequest("GET", "/?id=235&name=haskell", nil)
+
+	var obj struct {
+		Id   int    `query:"id"`
+		Name string `query:"name"`
+	}
+
+	err := c.Bind(&obj)
+
+	assert.Nil(t, err)
+	assert.Equal(t, 235, obj.Id)
+	assert.Equal(t, "haskell", obj.Name)
+}
+
 func TestContextWriteFile(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := CrateTestCtx(w)

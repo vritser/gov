@@ -30,11 +30,13 @@ var (
 	XML           = xmlParser{}
 	Form          = formParser{}
 	MultipartForm = multipartFormParser{}
+	Query         = queryParser{}
 )
 
 func Default(method, contentType string) BodyParser {
+
 	if method == "GET" {
-		return Form
+		return Query
 	}
 
 	switch contentType {

@@ -11,10 +11,14 @@ type formParser struct {
 type multipartFormParser struct {
 	BodyParser
 }
+type queryParser struct {
+	BodyParser
+}
 
 var (
 	formapper = formMapper{}
 	mulMapper = multipartFormMapper{}
+	qmapper   = queryMapper{}
 )
 
 func (p formParser) Bind(r *http.Request, obj interface{}) (err error) {
@@ -43,5 +47,11 @@ func (p multipartFormParser) Bind(r *http.Request, obj interface{}) (err error) 
 	mulMapper.files = r.MultipartForm.File
 	_, err = mulMapper.bind(obj)
 
+	return err
+}
+
+func (p queryParser) Bind(r *http.Request, obj interface{}) error {
+	qmapper.data = r.URL.Query()
+	_, err := qmapper.bind(obj)
 	return err
 }
